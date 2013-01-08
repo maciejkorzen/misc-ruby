@@ -1,4 +1,10 @@
 #!/usr/bin/ruby
+# DESCRIPTION:
+# This script takes list of servers and passwords, uploads given script on
+# them using SFTP, logs in on the server via SSH and executes uploaded
+# script using sudo. After execution uploaded script is removed from
+# remote server.
+#
 # README:
 # 1) Download this script.
 # 2) Create CSV file with names of servers and passwords (I assume that login is the same on each server).

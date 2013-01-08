@@ -1,15 +1,18 @@
 #!/usr/bin/ruby
 # README:
-# Put list of servers and passwords in file ./logins.csv.
-# Format of the file is following:
-# SERVER,PASSWORD
+# 1) Download this script.
+# 2) Create CSV file with names of servers and passwords (I assume that login is the same on each server).
+#    Format of the file is following:
+#    SERVER,PASSWORD
+# 3) Create script that you want to execute.
+# 4) Adjust variables in this script, run it and let it do all the work for you. :-)
 
 require 'rubygems'
 require 'net/ssh'
 require 'net/sftp'
 
 ### IMPORTANT ###################
-# Change your login below:
+# Change variables below:
 login_default = "your-login"
 script_name = "your-script1.sh"
 list_of_servers = "your-servers.csv"

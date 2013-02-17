@@ -109,7 +109,7 @@ def describe(imap, message_id, i = -1, count = -1)
 end
 
 def downloadMessage(imap, message_id)
-	file = Tempfile.new(['imap-copy', '.eml'])
+	file = Tempfile.new(['imap-batch', '.eml'])
 	begin
 		file.write(imap.uid_fetch(message_id, "BODY.PEEK[]")[0].attr["BODY[]"])
 	ensure
@@ -282,7 +282,7 @@ def handleImapDir(options)
 			else
 				print "."
 			end
-			handleMessage({ "imap" => imap, "message_id" => message_id, "trashName" => trashName, "spam" => spam, "age" => age })
+			handleMessage({ "imap" => imap, "message_id" => message_id, "trashName" => trashName, "age" => age })
 			i += 1
 		end
 		puts ""
@@ -320,7 +320,7 @@ def moveDirContentBetweenServers(srcImap, srcDir, dstImap, dstDir)
 		i = 1
 		searchResult.each do |message_id|
 			describe(srcImap, message_id, i, count)
-			file = Tempfile.new(['imap-copy', '.eml'])
+			file = Tempfile.new(['imap-batch', '.eml'])
 			begin
 				file.write(srcImap.uid_fetch(message_id, "BODY.PEEK[]")[0].attr["BODY[]"])
 				file.rewind
@@ -391,6 +391,36 @@ def deleteOld(options)
 	imap.expunge
 end
 
+# Uploads messages from local directory to imap directory.
+# Each message needs to be in separate file (like in Maildir).
+# Warning!!! After successfull upload file is removed!
+def uploadFromDisk(imapConn, importDir, imapDir)
+	i = 1
+	Dir.foreach(importDir) do |f|
+		if f == "." || f == ".."
+			next
+		end
+		puts "[#{i}] #{f}"
+		file = File.open("#{importDir}/#{f}")
+		problem = false
+		begin
+			imapConn.append(imapDir, file.read)
+		rescue => detail
+			problem = true
+			puts "Error while uploadning message to server!"
+			print detail.backtrace.join("\n")
+			puts ""
+		end
+		file.close
+		if problem == false
+			File.unlink("#{importDir}/#{f}")
+		end
+		i += 1
+	end
+	puts "Expunge"
+	imapConn.expunge
+end
+
 ##############################################################
 # Do the actual work.
 
@@ -398,6 +428,8 @@ firstAccountImap, firstAccountTrashName = connectImapAccount('first.server.com',
 secondAccountImap, secondAccountTrashName = connectImapAccount('imap.two.net', 'john@two.net', 'E4ample Password This Is')
 
 moveDirContentBetweenServers(firstAccountImap, 'INBOX/system-messages', secondAccountImap, 'INBOX/system-messages')
+
+uploadFromDisk(firstAccountImap, "/home/mylogin/imap-import/new", "imported")
 
 firstAccountImap.logout
 firstAccountImap.disconnect
